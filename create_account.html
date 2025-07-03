@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Create Account - Docker Quiz</title>
+</head>
+<body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(to right, #e0eafc, #cfdef3); height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; margin:0;">
+
+  <h1 style="position: absolute; top: 20px; width: 100%; text-align: center; font-size: 26px; color: #222; margin:0;">Create Your Account</h1>
+
+  <div style="background-color: #ffffff; padding: 40px 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12); width: 100%; max-width: 400px; animation: fadeIn 0.8s ease;">
+    <h2 style="text-align: center; margin-bottom: 25px; font-size: 22px; color: #333;">Sign Up</h2>
+    <form method="POST" action="/create_account">
+      <label for="new_username" style="display: block; margin-bottom: 6px; font-weight: 500; color: #444;">Username:</label>
+      <input type="text" name="new_username" id="new_username" required
+             style="width: 100%; padding: 12px 14px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; outline:none;"
+             onfocus="this.style.borderColor='#007bff'; this.style.boxShadow='0 0 0 3px rgba(0, 123, 255, 0.2)';"
+             onblur="this.style.borderColor='#ccc'; this.style.boxShadow='none';"
+      />
+
+      <label for="new_password" style="display: block; margin-bottom: 6px; font-weight: 500; color: #444;">Password:</label>
+      <input type="password" name="new_password" id="new_password" required
+             style="width: 100%; padding: 12px 14px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; outline:none;"
+             onfocus="this.style.borderColor='#007bff'; this.style.boxShadow='0 0 0 3px rgba(0, 123, 255, 0.2)';"
+             onblur="this.style.borderColor='#ccc'; this.style.boxShadow='none';"
+      />
+
+      <button type="submit" 
+              style="width: 100%; padding: 12px; background-color: #007bff; color: #fff; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease;"
+              onmouseover="this.style.backgroundColor='#0056b3';"
+              onmouseout="this.style.backgroundColor='#007bff';"
+      >
+        Create Account
+      </button>
+    </form>
+  </div>
+
+  <style>
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+  </style>
+
+</body>
+</html>
