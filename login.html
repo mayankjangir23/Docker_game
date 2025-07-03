@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Docker Quiz - Login</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body class="login-page">
+
+  <h1>Welcome to Docker Quiz</h1>
+
+  <div class="form-box">
+    <h2>Login</h2>
+    <form method="POST" action="/login">
+      <label for="username">Username:</label>
+      <input type="text" name="username" id="username" required />
+
+      <label for="password">Password:</label>
+      <input type="password" name="password" id="password" required />
+
+      <button type="submit">Log In</button>
+    </form>
+
+    <hr style="margin: 30px 0;" />
+
+    <form action="/create_account" method="GET">
+      <button type="submit">Create Account</button>
+    </form>
+  </div>
+
+</body>
+</html>
