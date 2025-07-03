@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Docker Quiz</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #f4f7f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        h2 {
+            color: #1216ff;
+            margin-bottom: 10px;
+        }
+
+        label {
+            font-weight: 500;
+        }
+
+        select, button {
+            padding: 10px 15px;
+            margin-top: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            outline: none;
+            transition: 0.3s ease;
+        }
+
+        select:focus, button:hover {
+            border-color: #2980b9;
+        }
+
+        button {
+            background-color: #2980b9;
+            color: white;
+            cursor: pointer;
+            border: none;
+        }
+
+        button:hover {
+            background-color: #1f6aa5;
+        }
+
+        #scoreboard {
+            margin-top: 20px;
+            font-size: 18px;
+            font-weight: bold;
+            color: #34495e;
+        }
+
+        #question-container, #result {
+            background-color: white;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        form label {
+            display: block;
+            margin: 10px 0;
+            font-size: 16px;
+        }
+
+        input[type="radio"] {
+            margin-right: 10px;
+        }
+
+        form button[type="submit"] {
+            margin-top: 15px;
+            background-color: #27ae60;
+        }
+
+        form button[type="submit"]:hover {
+            background-color: #219150;
+        }
+
+        #result p {
+            margin: 10px 0;
+        }
+
+        strong {
+            color: #34495e;
+        }
+
+        form[action="/logout"] {
+            text-align: center;
+        }
+
+        form[action="/logout"] button {
+            background-color: #c0392b;
+            font-weight: bold;
+        }
+
+        form[action="/logout"] button:hover {
+            background-color: #a83225;
+        }
+
+        @media (max-width: 600px) {
+            select, button {
+                width: 100%;
+            }
+
+            #question-container, #result {
+                padding: 15px;
+            }
+        }
+    </style>
+    <script>
+    let score = {
+        correct: 0,
+        wrong: 0
+    };
+
+    function updateScoreboard() {
+        const scoreboard = document.getElementById("scoreboard");
+        scoreboard.textContent = `Correct: ${score.correct} | Wrong: ${score.wrong}`;
+    }
+
+    async function getQuestion() {
+        const level = document.getElementById("level").value;
+
+        const res = await fetch(`/new_question?level=${level}`);
+        const data = await res.json();
+
+        const questionDiv = document.getElementById("question-container");
+        const resultDiv = document.getElementById("result");
+
+        const optionsHtml = Object.entries(data.options).map(
+            ([key, val]) => `
+                <label>
+                    <input type="radio" name="answer" value="${key}" required />
+                    ${key}) ${val}
+                </label><br>
+            `
+        ).join('');
+
+        questionDiv.innerHTML = `
+            <p><strong>Question:</strong> ${data.question}</p>
+            <form id="answerForm">
+                ${optionsHtml}
+                <input type="hidden" name="correct_answer" value="${data.correct_answer}">
+                <input type="hidden" name="explanation" value="${data.explanation}">
+                <input type="hidden" name="memory_trick" value="${data.memory_trick}">
+                <button type="submit">Submit Answer</button>
+            </form>
+        `;
+
+        resultDiv.innerHTML = "";
+
+        document.getElementById("answerForm").onsubmit = async function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const user_answer = formData.get("answer");
+            const correct_answer = formData.get("correct_answer");
+
+            const payload = {
+                user_answer,
+                correct_answer,
+                explanation: formData.get("explanation"),
+                memory_trick: formData.get("memory_trick")
+            };
+
+            const res = await fetch("/submit_answer", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const resultData = await res.json();
+
+            resultDiv.innerHTML = `
+                <p>${resultData.result}</p>
+                <p><strong>Explanation:</strong> ${resultData.explanation}</p>
+                <p><strong>Memory Trick:</strong> ${resultData.memory_trick}</p>
+            `;
+
+            // Update score
+            if (user_answer === correct_answer) {
+                score.correct++;
+            } else {
+                score.wrong++;
+            }
+            updateScoreboard();
+
+            // Automatically load next question after 3 seconds
+            setTimeout(() => {
+                getQuestion();
+            }, 3000);
+        };
+    }
+
+    window.onload = () => {
+        updateScoreboard();
+    };
+    </script>
+</head>
+<body>
+    <h2>Welcome, {{ username }}!</h2>
+
+    <label for="level">Choose difficulty:</label>
+    <select name="level" id="level">
+        <option value="newbie">Newbie</option>
+        <option value="basic" selected>Basic</option>
+        <option value="advanced">Advanced</option>
+    </select>
+    <button onclick="getQuestion()">Get New Question</button>
+
+    <div id="scoreboard"></div>
+
+    <div id="question-container" style="margin-top: 20px;"></div>
+    <div id="answer-container"></div>
+    <div id="result" style="margin-top: 20px;"></div>
+
+    <form method="POST" action="/logout" style="margin-top: 30px;">
+        <button type="submit">Logout</button>
+    </form>
+</body>
+</html>
