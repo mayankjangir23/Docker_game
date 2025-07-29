@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify, session, redirect, url_for, render_template_string, render_template
+from flask import Flask, request, jsonify, session, redirect, url_for, render_template
 from openai import OpenAI
 import re
 import time
@@ -6,15 +6,15 @@ import random
 from functools import wraps
 
 app = Flask(__name__)
-app.secret_key = ""  # Replace with a stronger secret in production
+app.secret_key = "something@something1234"
 
-# Initialize Gemini/OpenAI (your config here)
+# Initialize OpenAI Gemini Model
 model = OpenAI(
-    api_key="",  # Replace with your actual key
+    api_key="AIzaSyC4MRrfJFMu0va1ImCCp5-3FwRTFSfDlkI",
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )
 
-# Load users from file
+# Load user credentials
 def load_users(filepath="username_and_pw.txt"):
     users = {}
     try:
@@ -29,7 +29,7 @@ def load_users(filepath="username_and_pw.txt"):
 
 users_db = load_users()
 
-# Auth protection
+# Authentication decorator
 def login_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -38,7 +38,7 @@ def login_required(f):
         return f(*args, **kwargs)
     return wrapper
 
-# Parse MCQ format into question, options, explanation, trick
+# Parse MCQ AI response
 def parse_mcq_output(output_text):
     try:
         answer_match = re.search(r"Answer:\s*([A-Da-d])", output_text)
@@ -49,7 +49,6 @@ def parse_mcq_output(output_text):
         explanation = explanation_match.group(1).strip() if explanation_match else "No explanation found."
         memory_trick = memory_trick_match.group(1).strip() if memory_trick_match else "No memory trick."
 
-        # Extract question and options
         question_match = re.search(r"Question:\s*(.*?)\n[A-D]\)", output_text, re.DOTALL)
         question = question_match.group(1).strip() if question_match else "No question found."
 
@@ -63,24 +62,24 @@ def parse_mcq_output(output_text):
         print(f"[Parse Error]: {e}")
         return "Error parsing question", {}, "", "Could not parse explanation.", "No memory trick."
 
-# MCQ generator using OpenAI
+# AI Quiz Generator
 def docker_mcq_quiz(level):
     timestamp = int(time.time())
     topics = ["Dockerfile", "images", "volumes", "networks", "containers", "build", "compose"]
     topic = random.choice(topics)
 
     prompt = (
-        f"Generate a {level}-level Docker MCQ about '{topic}', unique to timestamp {timestamp}.\n"
-        "Use this format:\n"
-        "Question: <your question>\n"
-        "A) option1\n"
-        "B) option2\n"
-        "C) option3\n"
-        "D) option4\n"
-        "Answer: <A/B/C/D>\n"
-        "Explanation: <why this is correct>\n"
-        "Memory Trick: <a tip to remember this>"
-    )
+    f"Generate a {level}-level Docker MCQ on '{topic}' (be original using timestamp {timestamp}).\n"
+    "Respond in exactly the following format without repeating anything:\n\n"
+    "Question: What is ...?\n"
+    "A) ...\n"
+    "B) ...\n"
+    "C) ...\n"
+    "D) ...\n"
+    "Answer: A\n"
+    "Explanation: ...\n"
+    "Memory Trick: ..."
+)
 
     response = model.chat.completions.create(
         model="gemini-1.5-flash",
@@ -111,19 +110,7 @@ def login_page():
             return redirect(url_for("quiz_page"))
         return "Invalid username or password", 401
 
-    # Login form with button to create account
-    return '''
-    <h2>Login</h2>
-    <form method="POST" action="/login">
-        Username: <input type="text" name="username" required><br><br>
-        Password: <input type="password" name="password" required><br><br>
-        <input type="submit" value="Login">
-    </form>
-    <br>
-    <form action="/create_account" method="get">
-        <button type="submit">Create Account</button>
-    </form>
-    '''
+    return render_template("login.html")
 
 @app.route("/create_account", methods=["GET", "POST"])
 def create_account():
@@ -137,77 +124,23 @@ def create_account():
         if new_username in users_db:
             return "Username already exists.", 400
 
-        # Save to file
         with open("username_and_pw.txt", "a") as f:
             f.write(f"{new_username},{new_password}\n")
 
-        # Update in-memory DB
         users_db[new_username] = new_password
-
         return redirect(url_for("login_page"))
 
-    # GET request returns your inline styled create account page using render_template_string
-    create_account_html = '''
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <title>Create Account - Docker Quiz</title>
-    </head>
-    <body style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: linear-gradient(to right, #e0eafc, #cfdef3); height: 100vh; display: flex; justify-content: center; align-items: center; padding: 20px; margin:0;">
-
-      <h1 style="position: absolute; top: 20px; width: 100%; text-align: center; font-size: 26px; color: #222; margin:0;">Create Your Account</h1>
-
-      <div style="background-color: #ffffff; padding: 40px 30px; border-radius: 12px; box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12); width: 100%; max-width: 400px; animation: fadeIn 0.8s ease;">
-        <h2 style="text-align: center; margin-bottom: 25px; font-size: 22px; color: #333;">Sign Up</h2>
-        <form method="POST" action="/create_account">
-          <label for="new_username" style="display: block; margin-bottom: 6px; font-weight: 500; color: #444;">Username:</label>
-          <input type="text" name="new_username" id="new_username" required
-                 style="width: 100%; padding: 12px 14px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; outline:none;"
-                 onfocus="this.style.borderColor='#007bff'; this.style.boxShadow='0 0 0 3px rgba(0, 123, 255, 0.2)';"
-                 onblur="this.style.borderColor='#ccc'; this.style.boxShadow='none';"
-          />
-
-          <label for="new_password" style="display: block; margin-bottom: 6px; font-weight: 500; color: #444;">Password:</label>
-          <input type="password" name="new_password" id="new_password" required
-                 style="width: 100%; padding: 12px 14px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; outline:none;"
-                 onfocus="this.style.borderColor='#007bff'; this.style.boxShadow='0 0 0 3px rgba(0, 123, 255, 0.2)';"
-                 onblur="this.style.borderColor='#ccc'; this.style.boxShadow='none';"
-          />
-
-          <button type="submit" 
-                  style="width: 100%; padding: 12px; background-color: #007bff; color: #fff; font-size: 16px; border: none; border-radius: 6px; cursor: pointer; transition: background-color 0.3s ease;"
-                  onmouseover="this.style.backgroundColor='#0056b3';"
-                  onmouseout="this.style.backgroundColor='#007bff';"
-          >
-            Create Account
-          </button>
-        </form>
-      </div>
-
-      <style>
-        @keyframes fadeIn {
-          from {
-            opacity: 0;
-            transform: translateY(20px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-      </style>
-
-    </body>
-    </html>
-    '''
-    return render_template_string(create_account_html)
+    return render_template("create_account.html")
 
 @app.route("/quiz")
 @login_required
 def quiz_page():
-    username = session.get("username")
-    return render_template("quiz.html", username=username)
+    return render_template("quiz.html", username=session.get("username"))
+
+@app.route("/learn")
+@login_required
+def learn_page():
+    return render_template("learn.html", username=session.get("username"))
 
 @app.route("/logout", methods=["POST"])
 @login_required
@@ -239,7 +172,14 @@ def submit_answer():
     explanation = data.get("explanation", "")
     memory_trick = data.get("memory_trick", "")
 
+    if "score" not in session:
+        session["score"] = 0
+        session["total"] = 0
+
+    session["total"] += 1
+    
     if user_answer == correct_answer:
+        session["score"] += 1
         result = f"✅ Correct! Option {correct_answer} is right!"
     else:
         result = f"❌ Incorrect. Correct answer was: {correct_answer}"
@@ -247,8 +187,54 @@ def submit_answer():
     return jsonify({
         "result": result,
         "explanation": explanation,
-        "memory_trick": memory_trick
+        "memory_trick": memory_trick,
+        "score": session["score"],
+        "total": session["total"]
     })
+
+@app.route("/reset_score", methods=["POST"])
+@login_required
+def reset_score():
+    session["score"] = 0
+    session["total"] = 0
+    return jsonify({"message": "Score reset successfully."})
+
+# 🚀 AI Learning Endpoint
+@app.route("/learn_topic", methods=["POST"])
+@login_required
+def learn_topic():
+    query = request.json.get("query", "").strip()
+    if not query:
+        return jsonify({"error": "No topic provided."}), 400
+
+    prompt = (
+        f"The user wants to learn about the Docker topic: '{query}'.\n"
+        "Provide a structured, easy-to-understand guide that includes:\n"
+        "1. A clear and concise explanation of the topic.\n"
+        "2. At least 2-3 commonly used Docker commands related to the topic with brief examples.\n"
+        "3. A memory trick or analogy to help remember the concept.\n"
+        "4. Keep it beginner-friendly and structured.\n\n"
+        "Respond in this format:\n\n"
+        "🔍 Topic: <topic>\n\n"
+        "📘 Explanation:\n<detailed explanation here>\n\n"
+        "🛠️ Common Docker Commands:\n- command 1\n- command 2\n...\n\n"
+        "🧠 Learning Trick:\n<tip or analogy to remember>\n"
+    )
+
+    try:
+        response = model.chat.completions.create(
+            model="gemini-1.5-flash",
+            temperature=0.7,
+            messages=[
+                {"role": "system", "content": "You are a Docker tutor for beginners."},
+                {"role": "user", "content": prompt}
+            ]
+        )
+        reply = response.choices[0].message.content
+        return jsonify({"content": reply})
+    except Exception as e:
+        print(f"[AI Error]: {e}")
+        return jsonify({"error": "Failed to fetch learning content"}), 500
 
 if __name__ == "__main__":
     app.run(debug=True)
