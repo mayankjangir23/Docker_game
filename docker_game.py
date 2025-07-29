@@ -10,7 +10,7 @@ app.secret_key = "something@something1234"
 
 # Initialize OpenAI Gemini Model
 model = OpenAI(
-    api_key="AIzaSyC4MRrfJFMu0va1ImCCp5-3FwRTFSfDlkI",
+    api_key="enter your api key here",
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
 )
 
