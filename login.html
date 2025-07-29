@@ -3,28 +3,30 @@
 <head>
   <meta charset="UTF-8" />
   <title>Docker Quiz - Login</title>
-  <link rel="stylesheet" href="style.css" />
 </head>
-<body class="login-page">
+<body style="font-family: Arial, sans-serif; background-color: #f0f2f5; margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh;">
 
-  <h1>Welcome to Docker Quiz</h1>
+  <h1 style="color: #333; margin-bottom: 20px;">Welcome to Docker Quiz</h1>
 
-  <div class="form-box">
-    <h2>Login</h2>
-    <form method="POST" action="/login">
-      <label for="username">Username:</label>
-      <input type="text" name="username" id="username" required />
+  <div style="background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); width: 300px; text-align: center;">
+    <h2 style="margin-bottom: 20px; color: #444;">Login</h2>
 
-      <label for="password">Password:</label>
-      <input type="password" name="password" id="password" required />
+    <form method="POST" action="/login" style="display: flex; flex-direction: column;">
+      <label for="username" style="text-align: left; margin-bottom: 5px; font-weight: bold;">Username:</label>
+      <input type="text" name="username" id="username" required
+             style="padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px;" />
 
-      <button type="submit">Log In</button>
+      <label for="password" style="text-align: left; margin-bottom: 5px; font-weight: bold;">Password:</label>
+      <input type="password" name="password" id="password" required
+             style="padding: 10px; margin-bottom: 20px; border: 1px solid #ccc; border-radius: 4px;" />
+
+      <button type="submit" style="padding: 10px; background-color: #007BFF; color: white; border: none; border-radius: 4px; cursor: pointer;">Log In</button>
     </form>
 
     <hr style="margin: 30px 0;" />
 
     <form action="/create_account" method="GET">
-      <button type="submit">Create Account</button>
+      <button type="submit" style="padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer;">Create Account</button>
     </form>
   </div>
 
