@@ -9,11 +9,30 @@
             color: #333;
             margin: 0;
             padding: 20px;
+            position: relative;
         }
 
         h2 {
             color: #1216ff;
             margin-bottom: 10px;
+        }
+
+        #learn-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            padding: 10px 15px;
+            background-color: #2c3e50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 14px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+
+        #learn-btn:hover {
+            background-color: #1a242f;
         }
 
         label {
@@ -100,6 +119,15 @@
             background-color: #a83225;
         }
 
+        #lifelineBtn {
+            background-color: #e67e22;
+            margin-left: 10px;
+        }
+
+        #lifelineBtn:hover {
+            background-color: #cf711c;
+        }
+
         @media (max-width: 600px) {
             select, button {
                 width: 100%;
@@ -108,39 +136,63 @@
             #question-container, #result {
                 padding: 15px;
             }
+
+            #learn-btn {
+                position: static;
+                display: block;
+                width: 100%;
+                text-align: center;
+                margin-bottom: 20px;
+            }
         }
     </style>
     <script>
-    let score = {
-        correct: 0,
-        wrong: 0
-    };
+    let timerInterval;
+    const TIME_LIMIT = 30;
+    let currentOptions = {};
 
-    function updateScoreboard() {
-        const scoreboard = document.getElementById("scoreboard");
-        scoreboard.textContent = `Correct: ${score.correct} | Wrong: ${score.wrong}`;
+    function updateScoreboard(score, total) {
+        document.getElementById("scoreboard").textContent = `Score: ${score} / ${total}`;
+    }
+
+    function startTimer(onTimeout) {
+        let timeLeft = TIME_LIMIT;
+        const timerDiv = document.getElementById("timer");
+        timerDiv.textContent = `⏱️ Time Left: ${timeLeft}s`;
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timeLeft--;
+            timerDiv.textContent = `⏱️ Time Left: ${timeLeft}s`;
+            if (timeLeft <= 0) {
+                clearInterval(timerInterval);
+                timerDiv.textContent = "⏰ Time's up!";
+                onTimeout();
+            }
+        }, 1000);
     }
 
     async function getQuestion() {
         const level = document.getElementById("level").value;
-
         const res = await fetch(`/new_question?level=${level}`);
         const data = await res.json();
+
+        currentOptions = data.options;
 
         const questionDiv = document.getElementById("question-container");
         const resultDiv = document.getElementById("result");
 
         const optionsHtml = Object.entries(data.options).map(
             ([key, val]) => `
-                <label>
+                <label id="opt_${key}">
                     <input type="radio" name="answer" value="${key}" required />
                     ${key}) ${val}
-                </label><br>
-            `
+                </label><br>`
         ).join('');
 
         questionDiv.innerHTML = `
             <p><strong>Question:</strong> ${data.question}</p>
+            <div id="timer" style="color: red; font-weight: bold; margin: 10px 0;"></div>
+            <button id="lifelineBtn" onclick="useLifeline('${data.correct_answer}')">Use 50-50 Lifeline</button>
             <form id="answerForm">
                 ${optionsHtml}
                 <input type="hidden" name="correct_answer" value="${data.correct_answer}">
@@ -154,53 +206,67 @@
 
         document.getElementById("answerForm").onsubmit = async function(e) {
             e.preventDefault();
-
+            clearInterval(timerInterval);
             const formData = new FormData(e.target);
-            const user_answer = formData.get("answer");
-            const correct_answer = formData.get("correct_answer");
-
             const payload = {
-                user_answer,
-                correct_answer,
+                user_answer: formData.get("answer"),
+                correct_answer: formData.get("correct_answer"),
                 explanation: formData.get("explanation"),
                 memory_trick: formData.get("memory_trick")
             };
-
             const res = await fetch("/submit_answer", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(payload)
             });
-
             const resultData = await res.json();
-
-            resultDiv.innerHTML = `
+            document.getElementById("result").innerHTML = `
                 <p>${resultData.result}</p>
                 <p><strong>Explanation:</strong> ${resultData.explanation}</p>
                 <p><strong>Memory Trick:</strong> ${resultData.memory_trick}</p>
             `;
-
-            // Update score
-            if (user_answer === correct_answer) {
-                score.correct++;
-            } else {
-                score.wrong++;
-            }
-            updateScoreboard();
-
-            // Automatically load next question after 3 seconds
-            setTimeout(() => {
-                getQuestion();
-            }, 3000);
+            updateScoreboard(resultData.score, resultData.total);
+            setTimeout(() => getQuestion(), 3000);
         };
+
+        startTimer(() => {
+            document.getElementById("result").innerHTML = `
+                <p>⏰ Time's up! No answer submitted.</p>
+                <p><strong>Correct Answer:</strong> ${data.correct_answer}</p>
+                <p><strong>Explanation:</strong> ${data.explanation}</p>
+                <p><strong>Memory Trick:</strong> ${data.memory_trick}</p>
+            `;
+            updateScoreboard(0, 1);
+            setTimeout(() => getQuestion(), 3000);
+        });
     }
 
-    window.onload = () => {
-        updateScoreboard();
-    };
+    async function useLifeline(correct_answer) {
+        const res = await fetch("/use_lifeline", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ correct_answer })
+        });
+        const data = await res.json();
+        if (data.status === "ok") {
+            for (const key of data.eliminated) {
+                const optionLabel = document.getElementById(`opt_${key}`);
+                if (optionLabel) optionLabel.style.display = "none";
+            }
+            const lifelineBtn = document.getElementById("lifelineBtn");
+            lifelineBtn.disabled = true;
+            lifelineBtn.textContent = "Lifeline Used";
+        } else {
+            alert(data.message);
+        }
+    }
+
+    window.onload = () => updateScoreboard(0, 0);
     </script>
 </head>
 <body>
+    <a id="learn-btn" href="/learn">🧠 Learn</a>
+
     <h2>Welcome, {{ username }}!</h2>
 
     <label for="level">Choose difficulty:</label>
@@ -211,11 +277,9 @@
     </select>
     <button onclick="getQuestion()">Get New Question</button>
 
-    <div id="scoreboard"></div>
-
-    <div id="question-container" style="margin-top: 20px;"></div>
-    <div id="answer-container"></div>
-    <div id="result" style="margin-top: 20px;"></div>
+    <div id="scoreboard">Score: 0 / 0</div>
+    <div id="question-container"></div>
+    <div id="result"></div>
 
     <form method="POST" action="/logout" style="margin-top: 30px;">
         <button type="submit">Logout</button>
