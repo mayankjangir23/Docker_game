@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Learn Docker</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            margin: 0;
+            padding: 30px;
+        }
+
+        h2 {
+            color: #1216ff;
+            margin-bottom: 20px;
+        }
+
+        .search-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="text"] {
+            padding: 12px 15px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            width: 100%;
+            box-sizing: border-box;
+            outline: none;
+            transition: 0.3s ease;
+        }
+
+        input[type="text"]:focus {
+            border-color: #2980b9;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #2980b9;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: 0.3s ease;
+            align-self: flex-start;
+        }
+
+        button:hover {
+            background-color: #1f6aa5;
+        }
+
+        #result {
+            margin-top: 30px;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            white-space: pre-line;
+        }
+
+        @media (max-width: 600px) {
+            input[type="text"], button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Learn Docker with AI</h2>
+
+    <div class="search-container">
+        <input type="text" id="query" placeholder="Enter your docker query here">
+        <button onclick="fetchLearning()">Learn</button>
+    </div>
+
+    <div id="result"></div>
+
+    <script>
+        async function fetchLearning() {
+            const query = document.getElementById("query").value.trim();
+            const resultDiv = document.getElementById("result");
+            resultDiv.innerHTML = "⏳ Fetching AI-generated content...";
+
+            if (!query) {
+                resultDiv.innerHTML = "❗ Please enter a topic to learn.";
+                return;
+            }
+
+            try {
+                const res = await fetch("/learn_topic", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ query })
+                });
+
+                const data = await res.json();
+
+                if (data.error) {
+                    resultDiv.innerHTML = "⚠️ Error: " + data.error;
+                } else {
+                    resultDiv.innerHTML = data.content;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = "⚠️ Something went wrong. Please try again later.";
+            }
+        }
+    </script>
+</body>
+</html>
