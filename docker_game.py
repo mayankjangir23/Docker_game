@@ -1,5 +1,5 @@
 from flask import Flask, request, jsonify, session, redirect, url_for, render_template
-from openai import OpenAI
+import google.generativeai as genai
 import re
 import time
 import random
@@ -8,11 +8,9 @@ from functools import wraps
 app = Flask(__name__)
 app.secret_key = "something@something1234"
 
-# Initialize OpenAI Gemini Model
-model = OpenAI(
-    api_key="enter your api key here",
-    base_url="https://generativelanguage.googleapis.com/v1beta/openai/"
-)
+# Initialize Google Gemini Model
+genai.configure(api_key="AIzaSyC40Oh57SQA9_mwLcjWsgd0IJ9wAg030xY")
+model = genai.GenerativeModel("models/gemini-flash-latest")
 
 # Load user credentials
 def load_users(filepath="username_and_pw.txt"):
@@ -81,15 +79,11 @@ def docker_mcq_quiz(level):
     "Memory Trick: ..."
 )
 
-    response = model.chat.completions.create(
-        model="gemini-1.5-flash",
-        temperature=0.9,
-        messages=[
-            {"role": "system", "content": "You are a Docker MCQ generator."},
-            {"role": "user", "content": prompt}
-        ]
+    response = model.generate_content(
+        f"You are a Docker MCQ generator.\n\n{prompt}",
+        generation_config={"temperature": 0.9}
     )
-    return response.choices[0].message.content
+    return response.text
 
 # Routes
 @app.route("/")
@@ -222,15 +216,11 @@ def learn_topic():
     )
 
     try:
-        response = model.chat.completions.create(
-            model="gemini-1.5-flash",
-            temperature=0.7,
-            messages=[
-                {"role": "system", "content": "You are a Docker tutor for beginners."},
-                {"role": "user", "content": prompt}
-            ]
+        response = model.generate_content(
+            f"You are a Docker tutor for beginners.\n\n{prompt}",
+            generation_config={"temperature": 0.7}
         )
-        reply = response.choices[0].message.content
+        reply = response.text
         return jsonify({"content": reply})
     except Exception as e:
         print(f"[AI Error]: {e}")
