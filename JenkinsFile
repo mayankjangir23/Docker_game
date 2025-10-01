@@ -1,0 +1,15 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Clone from GitHub') {
+            steps {
+                withCredentials([string(credentialsId: 'github-token-for-jenkins', variable: 'GITHUB_TOKEN')]) {
+                    sh '''
+                        git clone https://$GITHUB_TOKEN@github.com/mayankjangir23/Docker_game.git
+                    '''
+                }
+            }
+        }
+    }
+}
